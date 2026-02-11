@@ -48,6 +48,9 @@ app.get("/", (req, res) => {
 require("./models/userModel");
 const user = mongose.model("User");
 
+require("./models/sensorLogModel");
+const SensorLog = mongoose.model("SensorLog");
+
 function generateAccessToken(id) {
 	return jwt.sign(id, tokenSecret, { expiresIn: "43200s" });
 }
@@ -143,5 +146,33 @@ app.post("/api/auth/register", async (req, res) => {
 		return res.status(201).json({ message: "User created successfully" });
 	} catch (error) {
 		return res.status(500).json({ message: "Internal server error" });
+	}
+});
+
+app.post("/api/saveLogs", async (req, res) => {
+	try {
+		const { ph, gasLeak1, gasLeak2, gasFlow, gasLevel, createdAt } = req.body;
+		await SensorLog.create({
+			ph,
+			gasLeak1,
+			gasLeak2,
+			gasFlow,
+			gasLevel,
+			createdAt,
+		});
+		res.status(201).json({ message: "Log saved successfully" });
+	} catch (err) {
+		console.error(err);
+		res.status(500).json({ message: "Failed to save log" });
+	}
+});
+
+app.get("/api/showLogs", async (req, res) => {
+	try {
+		const logs = await SensorLog.find().sort({ createdAt: -1 }).limit(50);
+		res.status(200).json(logs);
+	} catch (err) {
+		console.error(err);
+		res.status(500).json({ message: "Failed to fetch logs" });
 	}
 });
